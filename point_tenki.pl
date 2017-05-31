@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# last updated : 2017/05/31 12:39:53 JST
+# last updated : 2017/05/31 15:16:20 JST
 #
 # Yahooピンポイント天気の3時間予報から現在の天気情報を表示する。
 # Copyright (c) 2017 yama_natuki
@@ -156,7 +156,7 @@ sub weather_now() {
 
 # help
 sub show_help {
-  print "Usage: point_tenki.pl [options]\n".
+  print "Usage: point_tenki.pl [options]  url\n".
 	"\tOption:\n".
 	"\t\t-t|--today\n".
 	"\t\t\t3時間ごとの天気を表示。\n".
@@ -182,6 +182,13 @@ sub initialize {
   if ($show_help) {
 	&show_help;
 	exit 0;
+  }
+
+  if ($ARGV[$#ARGV]) {
+	my $adres = $ARGV[$#ARGV];
+	if ($adres =~ m|https://weather\.yahoo\.co\.jp/|) {
+      $url = $adres;
+	}
   }
 
   if ($weather_today) {
