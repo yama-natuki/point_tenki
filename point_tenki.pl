@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# last updated : 2017/05/31 15:16:20 JST
 #
 # Yahooピンポイント天気の3時間予報から現在の天気情報を表示する。
 # Copyright (c) 2017 yama_natuki
@@ -12,9 +11,10 @@ use LWP::UserAgent;
 use HTML::TreeBuilder;
 use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
 use utf8;
-binmode(STDOUT, ":utf8");
 use Encode;
+binmode(STDOUT, ":utf8");
 
+# デフォルトurl
 my $url = 'https://weather.yahoo.co.jp/weather/jp/13/4410/13120.html';
 my ($weather_today, $weather_now, $show_all, $show_help);
 my @tnki_data;
@@ -26,8 +26,6 @@ sub get_contents {
   my $http = LWP::UserAgent->new;
   my $res = $http->get($address);
   my $content = $res->content;
-
-  # HTML::TreeBuilderで解析する
   my $tree = HTML::TreeBuilder->new;
   $tree->parse($content);
   return $tree;
@@ -36,14 +34,17 @@ sub get_contents {
 # 場所を取得
 sub get_area {
   my $area = shift;
+
   # URLの判定
   eval {
 	$area = $area->look_down('class', 'yjw_title_h2')->find('h2')->as_text;
   };
+
   if ($@) {
 	print "Not URL\n";
 	exit 0;
   }
+
   utf8::decode($area);
   $area =~ s/エリアの情報//;
   return $area;
@@ -53,12 +54,9 @@ sub get_area {
 sub get_point_data {
   my $point = shift;
   my @items =  $point->look_down('id', 'yjw_pinpoint_today')->find('td');
-  # dump print
-  # print $_->as_text."\n" for @items;
-
-  # 分割
-  my $length = 54;
+  my $length = 54; #全項目数
   my $slice = 9; #分割数
+
   for (my $i = 0; $i < ($length / $slice); $i++) {
 	my @arrE1;
 	for (my $j =0; $j < $slice; $j++) {
@@ -70,6 +68,7 @@ sub get_point_data {
 	}
 	push(@tnki_data, \@arrE1);
   }
+
 }
 
 # 文字数カウント
@@ -99,8 +98,7 @@ sub mb_count {
 }
 
 sub gettime() {
-  my @now = localtime;
-  my $ntime = $now[2];
+  my $ntime = (localtime)[2];
 
   if    ( $ntime <  3 ) { return 1; }
   elsif ( $ntime <  6 ) { return 2; }
