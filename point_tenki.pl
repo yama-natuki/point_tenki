@@ -16,10 +16,10 @@ binmode(STDOUT, ":utf8");
 
 # デフォルトurl
 my $url = 'https://weather.yahoo.co.jp/weather/jp/13/4410/13120.html';
-my ($weather_today, $weather_now, $show_all, $show_help);
-my @tnki_data;
-my $area;
-my @nwidth;
+my ($weather_tomorrow, $weather_today, $weather_now, $show_all, $show_help);
+my @tnki_data; # 今日の天気
+my @tomorrow;  # 明日の天気
+my $area;      # 場所
 
 sub get_contents {
   my $address = shift;
@@ -88,10 +88,12 @@ sub split_data {
 # 文字数カウント
 sub data_width {
   my $item = shift;
+  my @width;
   foreach my $i ( @$item ) {
 	#全角文字を2byteでカウントする
-	push( @nwidth, length Encode::encode('cp932', $i) );
+	push( @width, length Encode::encode('cp932', $i) );
   }
+  return @width;
 }
 
 # マルチバイト文字数をカウントする
@@ -127,26 +129,36 @@ sub gettime() {
 #コマンドラインの取得
 sub getopt() {
   GetOptions(
-    "today|t" => \$weather_today,
-    "now|n"	  => \$weather_now,
-    "all|a"	  => \$show_all,
-	"help|h"  => \$show_help
+    "today|t"    => \$weather_today,
+    "now|n"      => \$weather_now,
+    "tomorrow|m" => \$weather_tomorrow,
+    "all|a"      => \$show_all,
+	"help|h"     => \$show_help
   );
 }
 
 sub print_today {
+  my $weather = shift;
   my $now = &gettime;
-  print "\e[32m3時間ごとの天気\e[0m\n";
+  my @width = &data_width($weather->[5]);
+  if ($weather_tomorrow) {
+      print "\e[32m明日の天気\e[0m\n";
+  }
+  else {
+      print "\e[32m3時間ごとの天気\e[0m\n";
+  }
   print $area . "\n";
   print "----------\n";
-    foreach my $x (@tnki_data) {
+    foreach my $x (@$weather) {
 	  for (my $i = 0; $i < 9; $i++) {
 		my $item = $x->[$i];
-		my $length = $nwidth[$i] + 2 - &mb_count( $item);
-		if ( $i eq $now ) {
-		  $item = "\e[1m" . $item . "\e[0m";
-		  $length = $nwidth[$i] + 2 - &mb_count( $item) + 8; #アドホックな対処で様子見
-		}
+		my $length = $width[$i] + 2 - &mb_count( $item);
+        unless ($weather_tomorrow) {
+            if ( $i eq $now ) {
+                $item = "\e[1m" . $item . "\e[0m";
+                $length = $width[$i] + 2 - &mb_count( $item) + 8; #アドホックな対処で様子見
+            }
+        }
 		#文字数指定を可変にするには %*sにして引数で渡すだけでいい
 		printf("%-*s", $length, $item);
 	  }
@@ -174,6 +186,8 @@ sub show_help {
 	"\t\t\t3時間ごとの天気を表示。\n".
 	"\t\t-n|--now\n".
 	"\t\t\t現在の時刻の天気を表示。\n".
+	"\t\t-m|--tomorrow\n".
+	"\t\t\t明日の天気を表示。\n".
 	"\t\t-a|--all\n".
 	"\t\t\t3時間ごとと現在の両方の天気を表示。\n".
 	"\t\t-h|--help\n".
@@ -183,8 +197,8 @@ sub show_help {
 sub initialize {
   my $item = &get_contents( $url );
   $area = &get_area($item);
-  &get_point_data($item);
-  &data_width( $tnki_data[5] );
+  @tnki_data = &get_point_data($item);
+  @tomorrow  = &point_tomorrow($item);
 }
 
 #main
@@ -205,7 +219,7 @@ sub initialize {
 
   if ($weather_today) {
 	&initialize;
-	&print_today;
+	&print_today(\@tnki_data);
   }
   elsif ($weather_now){
 	&initialize;
@@ -213,8 +227,14 @@ sub initialize {
   }
   elsif ($show_all) {
 	&initialize;
-	&print_today;
-	&weather_now;
+	&print_today(\@tnki_data);
+    $weather_tomorrow = 1;
+    print "\n";
+	&print_today(\@tomorrow);
+  }
+  elsif ($weather_tomorrow) {
+	&initialize;
+	&print_today(\@tomorrow);
   }
   else {
 	&show_help;
