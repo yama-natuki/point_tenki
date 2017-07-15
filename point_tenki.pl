@@ -22,46 +22,46 @@ my @tomorrow;  # 明日の天気
 my $area;      # 場所
 
 sub get_contents {
-  my $address = shift;
-  my $http = LWP::UserAgent->new;
-  my $res = $http->get($address);
-  my $content = $res->content;
-  my $tree = HTML::TreeBuilder->new;
-  $tree->parse($content);
-  return $tree;
+    my $address = shift;
+    my $http = LWP::UserAgent->new;
+    my $res = $http->get($address);
+    my $content = $res->content;
+    my $tree = HTML::TreeBuilder->new;
+    $tree->parse($content);
+    return $tree;
 }
 
 # 場所を取得
 sub get_area {
-  my $area = shift;
+    my $area = shift;
 
-  # URLの判定
-  eval {
-	$area = $area->look_down('class', 'yjw_title_h2')->find('h2')->as_text;
-  };
+    # URLの判定
+    eval {
+        $area = $area->look_down('class', 'yjw_title_h2')->find('h2')->as_text;
+    };
 
-  if ($@) {
-	print "Not URL\n";
-	exit 0;
-  }
+    if ($@) {
+        print "Not URL\n";
+        exit 0;
+    }
 
-  utf8::decode($area);
-  $area =~ s/エリアの情報//;
-  return $area;
+    utf8::decode($area);
+    $area =~ s/エリアの情報//;
+    return $area;
 }
 
 # 3時間ごとの天気を取得
 sub get_point_data {
-  my $point = shift;
-  my @items =  $point->look_down('id', 'yjw_pinpoint_today')->find('td');
-  &split_data( \@items );
+    my $point = shift;
+    my @items =  $point->look_down('id', 'yjw_pinpoint_today')->find('td');
+    &split_data( \@items );
 }
 
 # 明日の天気
 sub point_tomorrow {
-  my $point = shift;
-  my @items =  $point->look_down('id', 'yjw_pinpoint_tomorrow')->find('td');
-  &split_data( \@items );
+    my $point = shift;
+    my @items =  $point->look_down('id', 'yjw_pinpoint_tomorrow')->find('td');
+    &split_data( \@items );
 }
 
 sub split_data {
@@ -87,13 +87,13 @@ sub split_data {
 
 # 文字数カウント
 sub data_width {
-  my $item = shift;
-  my @width;
-  foreach my $i ( @$item ) {
-	#全角文字を2byteでカウントする
-	push( @width, length Encode::encode('cp932', $i) );
-  }
-  return @width;
+    my $item = shift;
+    my @width;
+    foreach my $i ( @$item ) {
+        #全角文字を2byteでカウントする
+        push( @width, length Encode::encode('cp932', $i) );
+    }
+    return @width;
 }
 
 # マルチバイト文字数をカウントする
@@ -114,135 +114,139 @@ sub mb_count {
 }
 
 sub gettime() {
-  my $ntime = (localtime)[2];
+    my $ntime = (localtime)[2];
 
-  if    ( $ntime <  3 ) { return 1; }
-  elsif ( $ntime <  6 ) { return 2; }
-  elsif ( $ntime <  9 ) { return 3; }
-  elsif ( $ntime < 12 ) { return 4; }
-  elsif ( $ntime < 15 ) { return 5; }
-  elsif ( $ntime < 18 ) { return 6; }
-  elsif ( $ntime < 21 ) { return 7; }
-  elsif ( $ntime < 24 ) { return 8; }
+    if    ( $ntime <  3 ) { return 1; }
+    elsif ( $ntime <  6 ) { return 2; }
+    elsif ( $ntime <  9 ) { return 3; }
+    elsif ( $ntime < 12 ) { return 4; }
+    elsif ( $ntime < 15 ) { return 5; }
+    elsif ( $ntime < 18 ) { return 6; }
+    elsif ( $ntime < 21 ) { return 7; }
+    elsif ( $ntime < 24 ) { return 8; }
 }
 
 #コマンドラインの取得
 sub getopt() {
-  GetOptions(
-    "today|t"    => \$weather_today,
-    "now|n"      => \$weather_now,
-    "tomorrow|m" => \$weather_tomorrow,
-    "all|a"      => \$show_all,
-	"help|h"     => \$show_help
-  );
+    GetOptions(
+               "today|t"    => \$weather_today,
+               "now|n"      => \$weather_now,
+               "tomorrow|m" => \$weather_tomorrow,
+               "all|a"      => \$show_all,
+               "help|h"     => \$show_help
+              );
 }
 
 sub print_today {
-  my $weather = shift;
-  my $now = &gettime;
-  my @width = &data_width($weather->[5]);
-  if ($weather_tomorrow) {
-      print "\e[32m明日の天気\e[0m\n";
-  }
-  else {
-      print "\e[32m3時間ごとの天気\e[0m\n";
-  }
-  print $area . "\n";
-  print "----------\n";
+    my $weather = shift;
+    my $now = &gettime;
+    my @width = &data_width($weather->[5]);
+
+    if ($weather_tomorrow) {
+        print "\e[32m明日の天気\e[0m\n";
+    }
+    else {
+        print "\e[32m3時間ごとの天気\e[0m\n";
+    }
+
+    print $area . "\n";
+    print "----------\n";
+
     foreach my $x (@$weather) {
-	  for (my $i = 0; $i < 9; $i++) {
-		my $item = $x->[$i];
-		my $length = $width[$i] + 2 - &mb_count( $item);
-        if ($i > 0) {
-            unless ($weather_tomorrow) {
-                if ( $i eq $now ) {
-                    $item = "\e[1m" . $item . "\e[0m";
-                    $length = $width[$i] + 2 - &mb_count( $item) + 8; #アドホックな対処で様子見
-                }
-                elsif ( $i < $now ) {
-                    $item = "\e[090m" . $item . "\e[0m";
-                    $length = $width[$i] + 4 - &mb_count( $item) + 8; #アドホックな対処で様子見
+        for (my $i = 0; $i < 9; $i++) {
+            my $item = $x->[$i];
+            my $length = $width[$i] + 2 - &mb_count( $item);
+            if ($i > 0) {
+                unless ($weather_tomorrow) {
+                    if ( $i eq $now ) {
+                        $item = "\e[1m" . $item . "\e[0m";
+                        $length = $width[$i] + 2 - &mb_count( $item) + 8; #アドホックな対処で様子見
+                    }
+                    elsif ( $i < $now ) {
+                        $item = "\e[090m" . $item . "\e[0m";
+                        $length = $width[$i] + 4 - &mb_count( $item) + 8; #アドホックな対処で様子見
+                    }
                 }
             }
+            #文字数指定を可変にするには %*sにして引数で渡すだけでいい
+            printf("%-*s", $length, $item);
         }
-		#文字数指定を可変にするには %*sにして引数で渡すだけでいい
-		printf("%-*s", $length, $item);
-	  }
-	  print "\n";
+        print "\n";
 	}
+
 }
 
-sub weather_now() {
-  my $now = &gettime;
-  print "\e[32mYahooピンポイント天気\e[0m\n";
-  print "場所   :: " . $area . "\n";
-  print "時間   :: " . $tnki_data[0]->[$now] . "\n";
-  print "天気   :: " . $tnki_data[1]->[$now] . "\n";
-  print "気温   :: " . $tnki_data[2]->[$now] . "℃\n";
-  print "湿度   :: " . $tnki_data[3]->[$now] . "％\n";
-  print "降水量 :: " . $tnki_data[4]->[$now] . " mm/h\n";
-  print "風速   :: " . $tnki_data[5]->[$now] . " m/s\n";
+sub weather_now {
+    my $now = &gettime;
+    print "\e[32mYahooピンポイント天気\e[0m\n";
+    print "場所   :: " . $area . "\n";
+    print "時間   :: " . $tnki_data[0]->[$now] . "\n";
+    print "天気   :: " . $tnki_data[1]->[$now] . "\n";
+    print "気温   :: " . $tnki_data[2]->[$now] . "℃\n";
+    print "湿度   :: " . $tnki_data[3]->[$now] . "％\n";
+    print "降水量 :: " . $tnki_data[4]->[$now] . " mm/h\n";
+    print "風速   :: " . $tnki_data[5]->[$now] . " m/s\n";
 }
 
 # help
 sub show_help {
-  print "Usage: point_tenki.pl [options]  url\n".
-	"\tOption:\n".
-	"\t\t-t|--today\n".
-	"\t\t\t3時間ごとの天気を表示。\n".
-	"\t\t-n|--now\n".
-	"\t\t\t現在の時刻の天気を表示。\n".
-	"\t\t-m|--tomorrow\n".
-	"\t\t\t明日の天気を表示。\n".
-	"\t\t-a|--all\n".
-	"\t\t\t3時間ごとと現在の両方の天気を表示。\n".
-	"\t\t-h|--help\n".
-	"\t\t\tこのテキストを表示。\n"
+    print "Usage: point_tenki.pl [options]  url\n".
+        "\tOption:\n".
+        "\t\t-t|--today\n".
+        "\t\t\t3時間ごとの天気を表示。\n".
+        "\t\t-n|--now\n".
+        "\t\t\t現在の時刻の天気を表示。\n".
+        "\t\t-m|--tomorrow\n".
+        "\t\t\t明日の天気を表示。\n".
+        "\t\t-a|--all\n".
+        "\t\t\t3時間ごとと現在の両方の天気を表示。\n".
+        "\t\t-h|--help\n".
+        "\t\t\tこのテキストを表示。\n"
 }
 
 sub initialize {
-  my $item = &get_contents( $url );
-  $area = &get_area($item);
-  @tnki_data = &get_point_data($item);
-  @tomorrow  = &point_tomorrow($item);
+    my $item = &get_contents( $url );
+    $area = &get_area($item);
+    @tnki_data = &get_point_data($item);
+    @tomorrow  = &point_tomorrow($item);
 }
 
 #main
 {
-  &getopt();
+    &getopt();
 
-  if ($show_help) {
-	&show_help;
-	exit 0;
-  }
+    if ($show_help) {
+        &show_help;
+        exit 0;
+    }
 
-  if ($ARGV[$#ARGV]) {
-	my $adres = $ARGV[$#ARGV];
-	if ($adres =~ m|https://weather\.yahoo\.co\.jp/|) {
-      $url = $adres;
-	}
-  }
+    if ($ARGV[$#ARGV]) {
+        my $adres = $ARGV[$#ARGV];
+        if ($adres =~ m|https://weather\.yahoo\.co\.jp/|) {
+            $url = $adres;
+        }
+    }
 
-  if ($weather_today) {
-	&initialize;
-	&print_today(\@tnki_data);
-  }
-  elsif ($weather_now){
-	&initialize;
-	&weather_now;
-  }
-  elsif ($show_all) {
-	&initialize;
-	&print_today(\@tnki_data);
-    $weather_tomorrow = 1;
-    print "\n";
-	&print_today(\@tomorrow);
-  }
-  elsif ($weather_tomorrow) {
-	&initialize;
-	&print_today(\@tomorrow);
-  }
-  else {
-	&show_help;
-  }
+    if ($weather_today) {
+        &initialize;
+        &print_today(\@tnki_data);
+    }
+    elsif ($weather_now) {
+        &initialize;
+        &weather_now;
+    }
+    elsif ($show_all) {
+        &initialize;
+        &print_today(\@tnki_data);
+        $weather_tomorrow = 1;
+        print "\n";
+        &print_today(\@tomorrow);
+    }
+    elsif ($weather_tomorrow) {
+        &initialize;
+        &print_today(\@tomorrow);
+    }
+    else {
+        &show_help;
+    }
 }
