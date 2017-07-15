@@ -17,7 +17,7 @@ binmode(STDOUT, ":utf8");
 # デフォルトurl
 my $url = 'https://weather.yahoo.co.jp/weather/jp/13/4410/13120.html';
 my ($weather_tomorrow, $weather_today, $weather_now, $show_all, $show_help);
-my @tnki_data; # 今日の天気
+my @today;     # 今日の天気
 my @tomorrow;  # 明日の天気
 my $area;      # 場所
 
@@ -180,12 +180,12 @@ sub weather_now {
     my $now = &gettime;
     print "\e[32mYahooピンポイント天気\e[0m\n";
     print "場所   :: " . $area . "\n";
-    print "時間   :: " . $tnki_data[0]->[$now] . "\n";
-    print "天気   :: " . $tnki_data[1]->[$now] . "\n";
-    print "気温   :: " . $tnki_data[2]->[$now] . "℃\n";
-    print "湿度   :: " . $tnki_data[3]->[$now] . "％\n";
-    print "降水量 :: " . $tnki_data[4]->[$now] . " mm/h\n";
-    print "風速   :: " . $tnki_data[5]->[$now] . " m/s\n";
+    print "時間   :: " . $today[0]->[$now] . "\n";
+    print "天気   :: " . $today[1]->[$now] . "\n";
+    print "気温   :: " . $today[2]->[$now] . "℃\n";
+    print "湿度   :: " . $today[3]->[$now] . "％\n";
+    print "降水量 :: " . $today[4]->[$now] . " mm/h\n";
+    print "風速   :: " . $today[5]->[$now] . " m/s\n";
 }
 
 # help
@@ -207,7 +207,7 @@ sub show_help {
 sub initialize {
     my $item = &get_contents( $url );
     $area = &get_area($item);
-    @tnki_data = &get_point_data($item);
+    @today = &get_point_data($item);
     @tomorrow  = &point_tomorrow($item);
 }
 
@@ -229,7 +229,7 @@ sub initialize {
 
     if ($weather_today) {
         &initialize;
-        &print_forecast(\@tnki_data);
+        &print_forecast(\@today);
     }
     elsif ($weather_now) {
         &initialize;
@@ -237,7 +237,7 @@ sub initialize {
     }
     elsif ($show_all) {
         &initialize;
-        &print_forecast(\@tnki_data);
+        &print_forecast(\@today);
         $weather_tomorrow = 1;
         print "\n";
         &print_forecast(\@tomorrow);
