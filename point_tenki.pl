@@ -160,11 +160,11 @@ sub print_today {
                 unless ($weather_tomorrow) {
                     if ( $i eq $now ) {
                         $item = "\e[1m" . $item . "\e[0m";
-                        $length = $width[$i] + 2 - &mb_count( $item) + 8; #アドホックな対処で様子見
+                        $length = $width[$i] + 2 - &mb_count( $item) + 8; #esc文字分追加
                     }
                     elsif ( $i < $now ) {
-                        $item = "\e[090m" . $item . "\e[0m";
-                        $length = $width[$i] + 4 - &mb_count( $item) + 8; #アドホックな対処で様子見
+                        $item = "\e[090m" . $item . "\e[0m";              #\e[2m は端末によって機能しないので。
+                        $length = $width[$i] + 4 - &mb_count( $item) + 8; #esc文字分追加
                     }
                 }
             }
@@ -199,7 +199,7 @@ sub show_help {
         "\t\t-m|--tomorrow\n".
         "\t\t\t明日の天気を表示。\n".
         "\t\t-a|--all\n".
-        "\t\t\t3時間ごとと現在の両方の天気を表示。\n".
+        "\t\t\t3時間ごとと明日の両方の天気を表示。\n".
         "\t\t-h|--help\n".
         "\t\t\tこのテキストを表示。\n"
 }
