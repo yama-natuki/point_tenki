@@ -137,7 +137,7 @@ sub getopt() {
               );
 }
 
-sub print_today {
+sub print_forecast {
     my $weather = shift;
     my $now = &gettime;
     my @width = &data_width($weather->[5]);
@@ -229,7 +229,7 @@ sub initialize {
 
     if ($weather_today) {
         &initialize;
-        &print_today(\@tnki_data);
+        &print_forecast(\@tnki_data);
     }
     elsif ($weather_now) {
         &initialize;
@@ -237,14 +237,14 @@ sub initialize {
     }
     elsif ($show_all) {
         &initialize;
-        &print_today(\@tnki_data);
+        &print_forecast(\@tnki_data);
         $weather_tomorrow = 1;
         print "\n";
-        &print_today(\@tomorrow);
+        &print_forecast(\@tomorrow);
     }
     elsif ($weather_tomorrow) {
         &initialize;
-        &print_today(\@tomorrow);
+        &print_forecast(\@tomorrow);
     }
     else {
         &show_help;
