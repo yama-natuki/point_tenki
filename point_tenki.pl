@@ -54,21 +54,14 @@ sub get_area {
 sub get_point_data {
   my $point = shift;
   my @items =  $point->look_down('id', 'yjw_pinpoint_today')->find('td');
-  my $length = 54; #全項目数
-  my $slice = 9; #分割数
+  &split_data( \@items );
+}
 
-  for (my $i = 0; $i < ($length / $slice); $i++) {
-	my @arrE1;
-	for (my $j =0; $j < $slice; $j++) {
-	  my $p = shift @items;
-	  if ($p eq "") { last;}
-	  $p = $p->as_text;
-	  utf8::decode($p);
-	  push(@arrE1, $p);
-	}
-	push(@tnki_data, \@arrE1);
-  }
-
+# 明日の天気
+sub point_tomorrow {
+  my $point = shift;
+  my @items =  $point->look_down('id', 'yjw_pinpoint_tomorrow')->find('td');
+  &split_data( \@items );
 }
 
 sub split_data {
