@@ -153,10 +153,16 @@ sub print_today {
 	  for (my $i = 0; $i < 9; $i++) {
 		my $item = $x->[$i];
 		my $length = $width[$i] + 2 - &mb_count( $item);
-        unless ($weather_tomorrow) {
-            if ( $i eq $now ) {
-                $item = "\e[1m" . $item . "\e[0m";
-                $length = $width[$i] + 2 - &mb_count( $item) + 8; #アドホックな対処で様子見
+        if ($i > 0) {
+            unless ($weather_tomorrow) {
+                if ( $i eq $now ) {
+                    $item = "\e[1m" . $item . "\e[0m";
+                    $length = $width[$i] + 2 - &mb_count( $item) + 8; #アドホックな対処で様子見
+                }
+                elsif ( $i < $now ) {
+                    $item = "\e[090m" . $item . "\e[0m";
+                    $length = $width[$i] + 4 - &mb_count( $item) + 8; #アドホックな対処で様子見
+                }
             }
         }
 		#文字数指定を可変にするには %*sにして引数で渡すだけでいい
