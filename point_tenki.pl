@@ -71,6 +71,27 @@ sub get_point_data {
 
 }
 
+sub split_data {
+    my $items = shift;
+    my $length = 54; #全項目数
+    my $slice = 9; #分割数
+    my @data;
+
+    for (my $i = 0; $i < ($length / $slice); $i++) {
+        my @arrE1;
+        for (my $j =0; $j < $slice; $j++) {
+            my $p = shift @$items;
+            if ($p eq "") { last;}
+            $p = $p->as_text;
+            utf8::decode($p);
+            push(@arrE1, $p);
+        }
+        push(@data, \@arrE1);
+    }
+    return @data;
+
+}
+
 # 文字数カウント
 sub data_width {
   my $item = shift;
