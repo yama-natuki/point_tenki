@@ -37,6 +37,7 @@ sub get_area {
 
     # URLの判定
     eval {
+        $area = $area->look_down('class', 'yjw_sub_md_lined');
         $area = $area->look_down('class', 'yjw_title_h2')->find('h2')->as_text;
     };
 
